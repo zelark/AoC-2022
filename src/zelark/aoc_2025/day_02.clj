@@ -12,14 +12,14 @@
                [(parse-long start)
                 (parse-long end)]))))
 
-(defn solve [input invalid-id?]
+(defn solve [input pattern]
   (aoc/sum (for [[start end] (parse-input input)
                  num (range start (inc end))
-                 :when (invalid-id? num)]
+                 :when (re-matches pattern (str num))]
              num)))
 
 ;; part 1 (414.583925 msecs)
-(time (solve input #(boolean (re-matches #"^(.+)\1$" (str %))))) ; 28846518423
+(solve input #"^(.+)\1$") ; 28846518423
 
 ;; part 2 (412.718297 msecs)
-(time (solve input #(boolean (re-matches #"^(.+)\1+$" (str %))))) ; 31578210022
+(solve input #"^(.+)\1+$") ; 31578210022

@@ -1,7 +1,7 @@
 (ns zelark.aoc.range
-  (:refer-clojure :exclude [range contains?]))
+  (:refer-clojure :exclude [merge range contains?]))
 
-(defrecord Range [start end len] 
+(defrecord Range [start end len]
   Object
   (toString [_] (str [start end])))
 
@@ -15,10 +15,10 @@
    (cond
      (sequential? range)
      (rangee (first range) (second range))
-     
+
      (instance? Range range)
      range
-     
+
      :else
      (throw (IllegalArgumentException. (format "Don't know how to crate a %s from %s" Range range)))))
   ([start end]
@@ -88,34 +88,58 @@
                (cond-> result prefix (conj prefix))))
       (cond-> result r1 (conj r1)))))
 
+(defn- merge-two [r1 r2]
+  (when (intersection r1 r2)
+    (rangee (min (:start r1) (:start r2))
+            (max (:end r1) (:end r2)))))
+
+(defn merge
+  "Merges ranges if there are intersections between.
+
+  Example: result for (merge [3 6] [10 15] [16 21] [12 19]) is [[3 6] [10 21]]"
+  ([& ranges]
+   (when-let [ranges (seq (sort-by :start < ranges))]
+     (reduce (fn [acc current]
+               (let [last (peek acc)]
+                 (if-let [merged (merge-two current last)]
+                   (conj (pop acc) merged)
+                   (conj acc current))))
+             (vector (first ranges))
+             (rest ranges)))))
+
 (comment
   (rangel 1 10) ; => [1 10]
   (rangee 10 1) ; => AssertionError
-  
+
   (shift (rangel 1 4000) 10) ; => [11 4011]
-  
+
   (contains? (rangel 1 10) 10) ; => true
   (contains? (rangee 1 10) 10) ; => false
-  
+
   (length (rangel 1 4000)) ; => 4000
-  
+
   (split (rangel 1 4000) 1000) ; => [[1 1000] [1000 4001]]
   (length (first (split (rangel 1 4000) 4000))) ; => 3999
-  
+
   (intersection (rangel 1 10) (rangel 5 12)) ; => [5 11]
-  
+
   (exclude-one (rangel 1 9) (rangel -3 3)) ; => [nil [1 10]]
   (exclude-one (rangel 1 9) (rangel -2 5)) ; => [nil [3 10]]
   (exclude-one (rangel 1 9) (rangel 0 10)) ; => [nil nil]
   (exclude-one (rangel 1 9) (rangel 2 5))  ; => [[1 2] [7 10]]
   (exclude-one (rangel 1 9) (rangel 6 7))  ; => [[1 6] nil]
   (exclude-one (rangel 1 9) (rangel 11 4)) ; => [[1 10] nil]
-  
+
   (exclude (rangel 1 9) (rangel -3 3))  ; => [[1 10]]
   (exclude (rangel 1 9) (rangel -2 5))  ; => [[3 10]]
   (exclude (rangel 1 9) (rangel 0 10))  ; => []
   (exclude (rangel 1 9) (rangel 2 5))   ; => [[1 2] [7 10]]
   (exclude (rangel 1 9) (rangel 6 7))   ; => [[1 6]]
   (exclude (rangel 1 9) (rangel 11 4))  ; => [[1 10]]
-  
+
+  (merge) ; => nil
+  (merge (rangee 3 6)
+         (rangee 10 15)
+         (rangee 16 21)
+         (rangee 12 19)) ; => [[3 6] [10 21]]
   )

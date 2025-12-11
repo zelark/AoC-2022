@@ -94,3 +94,23 @@
   [graph]
   (bk graph))
 
+;; https://blog.exupero.org/topological-sort-in-clojure/
+(defn topo-sort
+  [graph]
+  (when (seq graph)
+    (when-let [ks (keep (fn [[k v]] (when (empty? v) k)) graph)]
+      (concat ks
+              (topo-sort
+               (into {}
+                     (map (fn [[k v]] [k (apply disj v ks)]))
+                     (apply dissoc graph ks)))))))
+
+(comment
+  ;; NB: :a depends on :b :c and :d, not :b depends on :a etc.
+  (topo-sort {:a #{:b :c :d}
+              :b #{:c :d}
+              :c #{:d :e}
+              :d #{}
+              :e #{:d}})
+  ;; => (:d :e :c :b :a)
+  )

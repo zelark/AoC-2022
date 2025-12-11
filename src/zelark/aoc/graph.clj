@@ -50,6 +50,7 @@
                  groups
                  (conj groups (connected-group neighbors v))))
              []
+             (if (map? g) (keys g) g)))))
 
 (defn- bk
   "Performs Bron-Kerbosch algorithm using a pivot vertex.
